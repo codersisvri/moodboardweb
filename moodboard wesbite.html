@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MoodMart — Aesthetic Storefront</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+    :root{
+      --bg:#0b0b0f; --panel:#121218; --muted:#8a8a93; --text:#e8e8ee; --brand:#7c5cff; --brand-2:#ff4d8d; --ok:#22c55e; --warn:#facc15; --danger:#ef4444;
+      --card:#151522; --border:#232334; --chip:#1b1b28;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin-inline:auto;padding:16px}
+
+    /* Header */
+    header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#0b0b0f 60%,rgba(11,11,15,0.7));backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--border)}
+    .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));font-weight:700}
+    .brand h1{font-size:18px;letter-spacing:.3px;margin:0}
+
+    .searchbar{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:6px 10px;flex:1;max-width:720px;margin-inline:16px}
+    .searchbar input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:14px}
+    .chip{background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);cursor:pointer}
+    .chip.active{color:var(--text);border-color:var(--brand);box-shadow:0 0 0 2px #7c5cff22}
+
+    .cart-btn{position:relative;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--brand),var(--brand-2));border:none;color:white;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+    .cart-count{position:absolute;top:-6px;right:-6px;background:var(--warn);color:#111;font-size:11px;line-height:1;padding:6px 7px;border-radius:999px;border:2px solid #111;font-weight:700;min-width:22px;text-align:center}
+
+    /* Promo */
+    .promo{display:flex;align-items:center;gap:10px;justify-content:center;background:#0f0f16;border-bottom:1px dashed var(--border);padding:8px 12px;font-size:12px;color:var(--muted)}
+    .promo b{color:var(--text)}
+
+    /* Controls */
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 0}
+    .filters{display:flex;flex-wrap:wrap;gap:8px}
+    select, input[type="number"]{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:10px}
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .left{grid-column:span 3}
+    .right{grid-column:span 9}
+    @media(max-width:1000px){.left{grid-column:span 12}.right{grid-column:span 12}}
+
+    .sidebar{position:sticky;top:86px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .sidebar h3{margin:0 0 12px 0;font-size:16px}
+
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+    .thumb{width:100%;aspect-ratio:4/5;background:#0d0d15;position:relative;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s ease}
+    .card:hover .thumb img{transform:scale(1.04)}
+    .badge{position:absolute;top:10px;left:10px;background:#00000088;border:1px solid var(--border);backdrop-filter:blur(4px);color:#fff;padding:6px 10px;border-radius:999px;font-size:11px}
+    .content{padding:12px 12px 14px}
+    .title{font-size:15px;font-weight:600;margin:0 0 4px}
+    .meta{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+    .price{margin-top:8px;font-weight:700;font-size:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+    .btn{background:var(--chip);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:10px;font-weight:600;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));border:none;color:white}
+
+    /* Cart Drawer */
+    .drawer{position:fixed;inset:0 0 0 auto;display:grid;grid-template-columns:1fr 380px;pointer-events:none;z-index:60}
+    .drawer .scrim{background:#0008;opacity:0;transition:opacity .2s}
+    .drawer .panel{background:var(--panel);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column}
+    .drawer.open{pointer-events:auto}
+    .drawer.open .scrim{opacity:1}
+    .drawer.open .panel{transform:translateX(0)}
+    .cart-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .cart-list{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+    .cart-item{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;background:#12121a;border:1px solid var(--border);border-radius:12px;padding:8px}
+    .cart-item img{width:62px;height:62px;object-fit:cover;border-radius:8px}
+    .qty{display:flex;align-items:center;gap:8px}
+    .qty button{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--chip);color:var(--text);cursor:pointer}
+    .cart-footer{border-top:1px solid var(--border);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .summary{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:14px}
+    .summary b{font-size:16px}
+
+    /* Product Modal */
+    .modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:70}
+    .modal.open{display:flex}
+    .modal-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;max-width:900px;width:95%;display:grid;grid-template-columns:1.1fr 1fr;overflow:hidden}
+    @media(max-width:900px){.modal-card{grid-template-columns:1fr}}
+    .modal-media{background:#0d0d15}
+    .modal-media img{width:100%;height:100%;object-fit:cover;display:block}
+    .modal-body{padding:16px}
+    .stars{font-size:12px;color:#ffd76a}
+    .close-x{position:absolute;top:16px;right:16px;background:#0009;border:1px solid var(--border);color:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+
+    /* Footer */
+    footer{margin-top:40px;border-top:1px solid var(--border);color:var(--muted);padding:24px 0;text-align:center}
+    .tiny{font-size:12px;color:var(--muted)}
+  </style>
+  </head>
+  <body>
+    <header>
+      <div class="topbar container">
+        <div class="brand">
+          <div class="logo">MM</div>
+          <h1>MoodMart</h1>
+        </div>
+        <div class="searchbar" role="search">
+          <input id="searchInput" type="text"
+            placeholder="Search presets, prints, overlays, LUTs…"
+            aria-label="Search products" />
+          <span class="chip" data-chip="prints">Prints</span>
+          <span class="chip" data-chip="presets">Presets</span>
+          <span class="chip" data-chip="overlays">Overlays</span>
+        </div>
+        <button class="cart-btn" id="openCart" aria-haspopup="dialog"
+          aria-controls="cartDrawer">
+          <span>Cart</span>
+          <span class="cart-count" id="cartCount">0</span>
+        </button>
+      </div>
+      <div class="promo"><b>New:</b>&nbsp; Get 10% off on 3+ items •
+        Auto-applied at checkout • Free digital delivery ✨</div>
+    </header>
+
+    <main class="container">
+      <section class="controls">
+        <div class="filters">
+          <select id="categoryFilter" aria-label="Filter by category">
+            <option value="all">All Categories</option>
+            <option value="prints">Prints</option>
+            <option value="presets">Presets</option>
+            <option value="overlays">Overlays</option>
+            <option value="bundles">Bundles</option>
+          </select>
+          <label class="chip" title="Min price">
+            Min ₹ <input id="minPrice" type="number" min="0"
+              step="50" style="width:90px;margin-left:6px" />
+          </label>
+          <label class="chip" title="Max price">
+            Max ₹ <input id="maxPrice" type="number" min="0"
+              step="50" style="width:90px;margin-left:6px" />
+          </label>
+        </div>
+        <div class="filters">
+          <select id="sortBy" aria-label="Sort products">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+            <option value="newest">Newest</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="grid">
+        <aside class="left">
+          <div class="sidebar">
+            <h3>Quick Filters</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="chip fchip"
+                data-f="bestseller">Bestsellers</span>
+              <span class="chip fchip" data-f="new">New</span>
+              <span class="chip fchip" data-f="discount">On
+                Sale</span>
+              <span class="chip fchip" data-f="digital">Digital
+                Only</span>
+              <span class="chip fchip"
+                data-f="physical">Physical</span>
+            </div>
+            <p class="tiny" style="margin-top:12px">Tip: Click a
+              product to see details. Add to cart and your items
+              are saved locally.
+            </p>
+          </div>
+        </aside>
+
+        <section class="right">
+          <div class="products" id="productGrid"
+            aria-live="polite"></div>
+        </section>
+      </section>
+    </main>
+
+    <!-- Cart Drawer -->
+    <div class="drawer" id="cartDrawer" aria-modal="true" role="dialog">
+      <div class="scrim" id="closeCart" aria-label="Close cart"></div>
+      <div class="panel">
+        <div class="cart-header">
+          <strong>Your Cart</strong>
+          <button class="btn" id="closeCartBtn">Close</button>
+        </div>
+        <div class="cart-list" id="cartList"></div>
+        <div class="cart-footer">
+          <div class="summary"><span>Subtotal</span><span
+              id="subTotal">₹0</span></div>
+          <div class="summary"><span>GST (18%)</span><span
+              id="tax">₹0</span></div>
+          <div class="summary"><b>Total</b><b
+              id="grandTotal">₹0</b></div>
+          <button class="btn primary"
+            id="checkoutBtn">Checkout</button>
+          <span class="tiny">Note: This demo uses local checkout only.
+            Replace with Stripe/Razorpay for real payments. See code
+            comments.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal" id="productModal" aria-modal="true" role="dialog">
+      <div class="modal-card">
+        <button class="close-x" id="closeModal">✕</button>
+        <div class="modal-media"><img id="modalImage"
+            alt="Product image" /></div>
+        <div class="modal-body">
+          <h2 id="modalTitle" style="margin:0 0 6px"></h2>
+          <div class="stars" id="modalStars">★★★★★</div>
+          <p class="tiny" id="modalCategory"
+            style="margin:6px 0 12px"></p>
+          <p id="modalDesc" style="color:#c9c9d4"></p>
+          <div class="price" id="modalPrice">₹0</div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="modalMinus">−</button>
+            <span id="modalQty">1</span>
+            <button class="btn" id="modalPlus">＋</button>
+            <button class="btn primary" id="modalAdd">Add to
+              Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="container">
+        <div>© <span id="year"></span> MoodMart by You. Built with HTML
+          • CSS • jQuery.</div>
+        <div class="tiny">For production: add SEO meta tags, image
+          compression, and a real checkout (Stripe/Razorpay). Host on
+          Vercel/Netlify. Connect a custom domain.</div>
+      </div>
+    </footer>
+
+    <script>
+    // =========================
+    // PRODUCT DATA (Edit me)
+    // =========================
+    // Tip: Replace these with your real products. "type" controls physical vs digital for shipping logic later.
+    const PRODUCTS = [
+      {id:1,title:"Ocean Bloom – A4 Art Print",category:"prints",type:"physical",price:799,rating:4.8,new:true,bestseller:true,discount:0, img:"https://i.pinimg.com/1200x/40/3a/3c/403a3c332f65e7c012ed413fa10ce8c1.jpg", desc:"High-quality matte print. Moody blues and floral haze. Perfect for bedroom walls."},
+      {id:2,title:"Moody Film – Lightroom Presets (10)",category:"presets",type:"digital",price:1199,rating:4.9,new:false,bestseller:true,discount:15, img:"https://i.pinimg.com/736x/78/26/0b/78260be93cd09f688beee805bbda89d2.jpg", desc:"Ten cinematic presets for Lightroom Mobile/Desktop. One-click vibe: grain, teal-orange, soft blacks."},
+      {id:3,title:"Crumpled Paper Overlays (PNG Pack)",category:"overlays",type:"digital",price:499,rating:4.6,new:false,bestseller:false,discount:0, img:"https://i.pinimg.com/736x/9f/31/8d/9f318d0a6edf3041e8fd271854a45705.jpg", desc:"24 high-res overlays: folds, creases, texture. Drag & drop over your art for instant retro."},
+      {id:4,title:"Sunset Aura – 3 Poster Bundle",category:"bundles",type:"physical",price:1999,rating:4.7,new:true,bestseller:false,discount:10, img:"https://i.pinimg.com/736x/a1/98/49/a19849070e46379817216cc08c7c3422.jpg", desc:"Three-piece wall art set in warm dusk tones. Thick 250gsm stock. Museum-grade inks."},
+      {id:5,title:"35mm Dust & Scratches (Video Overlays)",category:"overlays",type:"digital",price:899,rating:4.5,new:false,bestseller:true,discount:0, img:"https://i.pinimg.com/736x/38/41/fb/3841fb8ff9a1567f61aa9a6f31db24ea.jpg", desc:"Authentic 4K film dust, gates, light leaks for reels/edits. MP4 + MOV alpha."},
+      {id:6,title:"Noir Studio – Lightroom Presets (7)",category:"presets",type:"digital",price:899,rating:4.4,new:true,bestseller:false,discount:0, img:"https://i.pinimg.com/736x/ba/0c/f6/ba0cf6d9cfedfe8242eeb4beb0730a31.jpg", desc:"Black & white, punchy contrast, deep matte blacks. Great for portraits and street shots."},
+      {id:7,title:"Astral Tide – Canvas Print 24×36",category:"prints",type:"physical",price:3499,rating:4.9,new:false,bestseller:true,discount:20, img:"https://i.pinimg.com/1200x/3c/5b/24/3c5b243041ede9e3c98171f786180e27.jpg", desc:"Large-format canvas with gallery wrap. Cosmic teal waves. Statement piece."},
+      {id:8,title:"Creator Starter Mega Bundle",category:"bundles",type:"digital",price:2999,rating:4.8,new:false,bestseller:true,discount:30, img:"https://i.pinimg.com/736x/77/78/ee/7778ee9f3a057710001739b89192e3f6.jpg", desc:"Best value: 20 presets + 40 overlays + 12 LUTs. Instant download. Commercial license included."},
+      {id:8,title:"Creator Starter Mega Bundle",category:"bundles",type:"digital",price:2999,rating:4.8,new:false,bestseller:true,discount:30, img:"https://i.pinimg.com/736x/ce/4d/2f/ce4d2f0499dca73ffdfcb8129449aad2.jpg", desc:"Best value: 20 presets + 40 overlays + 12 LUTs. Instant download. Commercial license included."}
+    ];
+
+    // ===============
+    // UTILITIES
+    // ===============
+    const fmtINR = (n)=> `₹${n.toLocaleString('en-IN')}`;
+    const clamp=(n,a,b)=>Math.min(Math.max(n,a),b);
+    const stars=(r)=>'★'.repeat(Math.round(r))+'☆'.repeat(5-Math.round(r));
+
+    // ===============
+    // STATE
+    // ===============
+    let cart = JSON.parse(localStorage.getItem('moodmart_cart')||'[]');
+    let currentFilter = {q:'',cat:'all',min:null,max:null,quick:new Set(),sort:'featured'};
+    let modalProduct = null; let modalQty=1;
+
+    // ===============
+    // RENDER PRODUCTS
+    // ===============
+    function applyFilters(list){
+      const q = currentFilter.q.trim().toLowerCase();
+      let out = list.filter(p=>{
+        if(currentFilter.cat!=='all' && p.category!==currentFilter.cat) return false;
+        if(currentFilter.min!=null && p.price < currentFilter.min) return false;
+        if(currentFilter.max!=null && p.price > currentFilter.max) return false;
+        if(q && !(p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))) return false;
+        // quick chips
+        for(const f of currentFilter.quick){
+          if(f==='bestseller' && !p.bestseller) return false;
+          if(f==='new' && !p.new) return false;
+          if(f==='discount' && !(p.discount>0)) return false;
+          if(f==='digital' && p.type!=='digital') return false;
+          if(f==='physical' && p.type!=='physical') return false;
+        }
+        return true;
+      });
+
+      switch(currentFilter.sort){
+        case 'price-asc': out.sort((a,b)=>a.price-b.price); break;
+        case 'price-desc': out.sort((a,b)=>b.price-a.price); break;
+        case 'rating': out.sort((a,b)=>b.rating-a.rating); break;
+        case 'newest': out.sort((a,b)=> (b.new?1:0)-(a.new?1:0)); break;
+        default: out.sort((a,b)=> (b.bestseller?1:0)-(a.bestseller?1:0));
+      }
+      return out;
+    }
+
+    function renderProducts(){
+      const grid = $('#productGrid');
+      grid.empty();
+      const list = applyFilters(PRODUCTS);
+      if(!list.length){
+        grid.append(`<div style="opacity:.8">No products match your filters. Try clearing some chips or search.</div>`);
+        return;
+      }
+      for(const p of list){
+        const discounted = p.discount>0 ? Math.round(p.price*(1-p.discount/100)) : null;
+        const priceHtml = discounted ? `<span class="price">${fmtINR(discounted)} <span class="tiny" style="text-decoration:line-through;color:var(--muted);margin-left:6px">${fmtINR(p.price)}</span> <span class="chip" style="margin-left:6px;color:#fff;background:#1f2937;border-color:#374151">-${p.discount}%</span></span>` : `<span class="price">${fmtINR(p.price)}</span>`;
+        const badge = p.new? 'New' : (p.bestseller? 'Bestseller' : (p.discount? 'Sale' : ''));
+        const card = $(`
+          <article class="card" data-id="${p.id}" tabindex="0" aria-label="${p.title}">
+            <div class="thumb">
+              <img src="${p.img}" alt="${p.title}">
+              ${badge?`<span class="badge">${badge}</span>`:''}
+            </div>
+            <div class="content">
+              <h3 class="title">${p.title}</h3>
+              <div class="meta"><span>${p.category}</span> • <span class="stars">${stars(p.rating)}</span></div>
+              ${priceHtml}
+              <div class="row">
+                <button class="btn view">View</button>
+                <button class="btn primary add">Add</button>
+              </div>
+            </div>
+          </article>
+        `);
+        card.find('.view').on('click',()=>openModal(p));
+        card.find('.add').on('click',()=>addToCart(p,1));
+        card.on('keydown',e=>{ if(e.key==='Enter') openModal(p); });
+        card.find('.thumb').on('click',()=>openModal(p));
+        grid.append(card);
+      }
+    }
+
+    // ===============
+    // MODAL
+    // ===============
+    function openModal(p){
+      modalProduct=p; modalQty=1;
+      $('#modalImage').attr('src',p.img).attr('alt',p.title);
+      $('#modalTitle').text(p.title);
+      $('#modalCategory').text(`${p.category} • ${p.type==='digital'?'Instant download':'Ships in 3–5 days'}`);
+      $('#modalDesc').text(p.desc);
+      $('#modalPrice').text(fmtINR(p.discount?Math.round(p.price*(1-p.discount/100)):p.price));
+      $('#modalStars').text(stars(p.rating));
+      $('#modalQty').text(modalQty);
+      $('#productModal').addClass('open');
+    }
+    function closeModal(){ $('#productModal').removeClass('open'); }
+    $('#closeModal').on('click',closeModal);
+    $('#productModal').on('click',e=>{ if(e.target.id==='productModal') closeModal(); });
+    $('#modalMinus').on('click',()=>{ modalQty=clamp(modalQty-1,1,99); $('#modalQty').text(modalQty); });
+    $('#modalPlus').on('click',()=>{ modalQty=clamp(modalQty+1,1,99); $('#modalQty').text(modalQty); });
+    $('#modalAdd').on('click',()=>{ if(modalProduct){ addToCart(modalProduct, modalQty); closeModal(); }});
+
+    // ===============
+    // CART
+    // ===============
+    function saveCart(){ localStorage.setItem('moodmart_cart', JSON.stringify(cart)); updateCartCount(); }
+    function updateCartCount(){ const c = cart.reduce((s,i)=>s+i.qty,0); $('#cartCount').text(c); }
+
+    function addToCart(p,qty){
+      const i = cart.find(x=>x.id===p.id);
+      if(i) i.qty = clamp(i.qty+qty,1,99); else cart.push({id:p.id,qty:clamp(qty,1,99)});
+      saveCart();
+      flashAdd();
+    }
+    function flashAdd(){
+      $('#openCart').addClass('pulse');
+      setTimeout(()=>$('#openCart').removeClass('pulse'),300);
+    }
+
+    function getProduct(id){ return PRODUCTS.find(p=>p.id===id); }
+
+    function renderCart(){
+      const list = $('#cartList'); list.empty();
+      if(!cart.length){ list.append('<div class="tiny">Your cart is empty. Add something pretty ✨</div>'); updateTotals(); return; }
+      for(const line of cart){
+        const p = getProduct(line.id); if(!p) continue;
+        const unit = p.discount? Math.round(p.price*(1-p.discount/100)) : p.price;
+        const item = $(`
+          <div class="cart-item">
+            <img src="${p.img}" alt="${p.title}">
+            <div>
+              <div style="font-weight:600">${p.title}</div>
+              <div class="tiny" style="margin-top:2px;color:var(--muted)">${p.type==='digital'?'Digital download':'Physical item'}</div>
+              <div style="margin-top:6px">${fmtINR(unit)} each</div>
+            </div>
+            <div class="qty">
+              <button class="minus">−</button>
+              <span>${line.qty}</span>
+              <button class="plus">＋</button>
+              <button class="btn" style="margin-left:8px" title="Remove">Remove</button>
+            </div>
+          </div>
+        `);
+        item.find('.minus').on('click',()=>{ line.qty=clamp(line.qty-1,1,99); saveCart(); renderCart(); });
+        item.find('.plus').on('click',()=>{ line.qty=clamp(line.qty+1,1,99); saveCart(); renderCart(); });
+        item.find('.btn').on('click',()=>{ cart=cart.filter(x=>x.id!==line.id); saveCart(); renderCart(); });
+        list.append(item);
+      }
+      updateTotals();
+    }
+
+    function updateTotals(){
+      let subtotal = 0;
+      for(const line of cart){
+        const p=getProduct(line.id); if(!p) continue; const unit=p.discount?Math.round(p.price*(1-p.discount/100)):p.price; subtotal += unit*line.qty;
+      }
+      const tax = Math.round(subtotal*0.18); // 18% GST example — adjust for your region
+      const total = subtotal + tax;
+      $('#subTotal').text(fmtINR(subtotal));
+      $('#tax').text(fmtINR(tax));
+      $('#grandTotal').text(fmtINR(total));
+    }
+
+    // Drawer open/close
+    function openCart(){ $('#cartDrawer').addClass('open'); renderCart(); }
+    function closeCart(){ $('#cartDrawer').removeClass('open'); }
+    $('#openCart').on('click',openCart);
+    $('#closeCart, #closeCartBtn').on('click',closeCart);
+
+    // ===============
+    // SEARCH / FILTERS / SORT
+    // ===============
+    $('#searchInput').on('input',function(){ currentFilter.q=this.value; renderProducts(); });
+    $('#categoryFilter').on('change',function(){ currentFilter.cat=this.value; renderProducts(); });
+    $('#minPrice').on('change',function(){ currentFilter.min=this.value?Number(this.value):null; renderProducts(); });
+    $('#maxPrice').on('change',function(){ currentFilter.max=this.value?Number(this.value):null; renderProducts(); });
+    $('#sortBy').on('change',function(){ currentFilter.sort=this.value; renderProducts(); });
+
+    $('.chip[data-chip]').on('click',function(){
+      const cat = $(this).data('chip');
+      $('#categoryFilter').val(cat); currentFilter.cat=cat; renderProducts();
+      $('.chip[data-chip]').removeClass('active'); $(this).addClass('active');
+    });
+
+    $('.fchip').on('click',function(){
+      const f=$(this).data('f');
+      if(currentFilter.quick.has(f)) currentFilter.quick.delete(f); else currentFilter.quick.add(f);
+      $(this).toggleClass('active'); renderProducts();
+    });
+
+    // ===============
+    // CHECKOUT (DEMO)
+    // ===============
+    // Replace this with Stripe/Razorpay integration in production.
+    // Stripe (example): create Checkout Session on your server, then redirect.
+    // Razorpay: load script, call new Razorpay(options).open() with order_id from your server.
+    $('#checkoutBtn').on('click',()=>{
+      if(!cart.length){ alert('Your cart is empty.'); return; }
+      const order = {
+        id: 'MM-' + Math.random().toString(36).slice(2,8).toUpperCase(),
+        items: cart.map(l=>({ id:l.id, title:getProduct(l.id)?.title, qty:l.qty })),
+        total: $('#grandTotal').text(),
+        ts: new Date().toISOString()
+      };
+      localStorage.setItem('moodmart_last_order', JSON.stringify(order));
+      alert(`Order created: ${order.id}\nThis is a demo. Hook this to Stripe/Razorpay for real payments.`);
+      cart = []; saveCart(); renderCart();
+      closeCart();
+    });
+
+    // ===============
+    // INIT
+    // ===============
+    $(function(){
+      $('#year').text(new Date().getFullYear());
+      updateCartCount();
+      renderProducts();
+    });
+  </script>
+  </body>
+</html>
